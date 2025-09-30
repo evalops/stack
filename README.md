@@ -1,6 +1,20 @@
 # Transformers Stack
 
-A cohesive Transformers stack built on PyTorch with uv for reproducible dependency management. This stack covers model definition, data loading, training/inference infrastructure, optimization/quantization, evaluation, and environment management.
+[![CI](https://github.com/evalops/stack/actions/workflows/ci.yml/badge.svg)](https://github.com/evalops/stack/actions/workflows/ci.yml)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+
+A production-ready Transformers stack built on PyTorch with uv for reproducible dependency management. This stack covers model definition, data loading, training/inference infrastructure, optimization/quantization, evaluation, deployment, and environment management.
+
+**Features:**
+- 🚀 **Fast Setup**: Ultra-fast dependency management with `uv`
+- 🧪 **Tested**: Comprehensive test suite with 13+ unit tests
+- 🐳 **Docker Ready**: CPU and CUDA Dockerfiles included
+- 📊 **Serving**: Production FastAPI server with Prometheus metrics
+- 🎯 **CI/CD**: GitHub Actions workflows included
+- 🔧 **Configurable**: Hydra configs for reproducible experiments
+- 📚 **Examples**: Multiple training and evaluation scripts
 
 ## Core Components
 
@@ -22,34 +36,58 @@ A cohesive Transformers stack built on PyTorch with uv for reproducible dependen
 | **High‑throughput inference** | `vllm==0.10.2` | Serves large‑language models with continuous batching |
 | **Logging & monitoring** | `wandb` or `mlflow` | For experiment tracking (add as needed) |
 
-## Installation
+## Quick Start
 
-### 1. Install uv
+### Installation
 
 ```bash
+# 1. Install uv
 curl -LsSf https://astral.sh/uv/install.sh | sh
-```
 
-### 2. Create & activate a virtual environment
+# 2. Clone the repository
+git clone https://github.com/evalops/stack.git
+cd stack
 
-```bash
+# 3. Create virtual environment
 uv venv --python=python3.11 .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-```
 
-### 3. Lock exact versions
-
-```bash
+# 4. Install dependencies
 uv pip compile pyproject.toml -o requirements.txt
+uv pip sync requirements.txt
+
+# 5. Optional: Install additional features
+# For serving:
+uv pip sync requirements-serve.txt
+
+# For development:
+uv pip sync requirements-dev.txt
 ```
 
-### 4. Sync the environment with the lockfile
+### Running Tests
 
 ```bash
-uv pip sync requirements.txt
+pytest tests/ -v --cov=src
 ```
 
-`uv` ensures that your environment exactly matches the locked versions—packages not in `requirements.txt` are removed—so you avoid "dependency drift."
+### Starting the Inference Server
+
+```bash
+python serving/app.py
+# Server runs on http://localhost:8000
+# API docs at http://localhost:8000/docs
+# Metrics at http://localhost:8000/metrics
+```
+
+### Training a Model
+
+```bash
+# Using LoRA
+python examples/train_lora.py
+
+# Using Trainer API
+python examples/train_with_trainer.py
+```
 
 ## Example Usage
 
@@ -88,6 +126,72 @@ for batch in dataloader:
 
 This example shows the interaction between `datasets`, `transformers`, `peft`, and `accelerate`. Swap in `bitsandbytes` optimizers or `flash-attn` kernels as your hardware allows.
 
+## Docker Deployment
+
+### Build and Run with Docker
+
+```bash
+# Build CPU image
+docker build -f Dockerfile.cpu -t stack:cpu .
+
+# Run container
+docker run -p 8000:8000 stack:cpu
+
+# Or use Docker Compose
+docker-compose up inference-cpu
+```
+
+### CUDA/GPU Deployment
+
+```bash
+# Build CUDA image
+docker build -f Dockerfile.cuda -t stack:cuda .
+
+# Run with GPU access
+docker run --gpus all -p 8000:8000 stack:cuda
+```
+
+### API Endpoints
+
+Once running, the server exposes:
+- `GET /health` - Health check
+- `GET /ready` - Readiness probe
+- `POST /predict` - Run inference
+- `GET /metrics` - Prometheus metrics
+- `GET /docs` - Interactive API documentation
+
+### Example Request
+
+```bash
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{"text": "I love this product!", "return_all_scores": false}'
+```
+
+## Configuration with Hydra
+
+The stack uses Hydra for configuration management. Configs are in `conf/`:
+
+```yaml
+# conf/config.yaml
+defaults:
+  - model: bert_base
+  - data: imdb
+  - train: default
+  - eval: default
+  - system: auto
+
+task: seq_cls
+seed: 42
+output_dir: outputs/${now:%Y%m%d-%H%M%S}
+```
+
+Override configs from command line:
+
+```bash
+python train.py model=bert_base data=imdb train.epochs=5 train.batch_size=16
+```
+
 ## Important Notes & Hazards
 
 ### CUDA-only modules
@@ -106,27 +210,93 @@ Periodically check for new releases, update your `pyproject.toml` versions, run 
 
 ```
 stack/
-├── pyproject.toml          # Project configuration and dependencies
-├── README.md               # This file
-├── examples/               # Example scripts
-│   └── train_lora.py      # LoRA fine-tuning example
-├── requirements.txt        # Locked dependencies (generated by uv)
-└── .venv/                 # Virtual environment (created by uv)
+├── pyproject.toml              # Project configuration and dependencies
+├── README.md                   # This file
+├── .github/
+│   └── workflows/
+│       └── ci.yml             # GitHub Actions CI workflow
+├── conf/                       # Hydra configuration files
+│   ├── config.yaml            # Main config
+│   ├── model/                 # Model configs
+│   ├── data/                  # Dataset configs
+│   ├── train/                 # Training configs
+│   ├── eval/                  # Evaluation configs
+│   └── system/                # System/hardware configs
+├── examples/                   # Example training scripts
+│   ├── train_lora.py          # LoRA fine-tuning
+│   ├── train_with_trainer.py  # Trainer API example
+│   ├── evaluate_model.py      # Model evaluation
+│   └── README.md              # Examples documentation
+├── serving/                    # Production inference server
+│   ├── app.py                 # FastAPI application
+│   └── test_server.py         # Server tests
+├── src/
+│   └── transformers_stack/    # Main package
+├── templates/                  # Documentation templates
+│   ├── model_card.md          # Model card template
+│   └── dataset_card.md        # Dataset card template
+├── tests/                      # Test suite
+│   ├── test_model.py          # Model tests
+│   ├── test_peft.py           # LoRA/PEFT tests
+│   └── test_tokenization.py   # Tokenization tests
+├── Dockerfile.cpu              # CPU inference Docker image
+├── Dockerfile.cuda             # CUDA inference Docker image
+├── docker-compose.yml          # Docker Compose configuration
+├── requirements.txt            # Core dependencies (locked)
+├── requirements-serve.txt      # Serving dependencies (locked)
+├── requirements-dev.txt        # Dev dependencies (locked)
+└── .pre-commit-config.yaml    # Pre-commit hooks
 ```
 
 ## Development
 
-Install development dependencies:
+### Install Development Tools
 
 ```bash
-uv pip install -e ".[dev]"
+uv pip sync requirements-dev.txt
 ```
 
 This includes:
 - `ruff` - Fast Python linter
 - `black` - Code formatter
-- `pytest` - Testing framework
+- `pytest` + `pytest-cov` + `pytest-xdist` - Testing framework with coverage and parallel execution
+- `mypy` - Static type checker
+- `pre-commit` - Git hooks
+- `mkdocs-material` - Documentation site generator
 - `ipykernel` - Jupyter notebook support
+
+### Pre-commit Hooks
+
+```bash
+pre-commit install
+pre-commit run --all-files
+```
+
+### Running Tests
+
+```bash
+# Run all tests
+pytest tests/ -v
+
+# Run with coverage
+pytest tests/ --cov=src --cov-report=term --cov-report=html
+
+# Run in parallel
+pytest tests/ -n auto
+```
+
+### Code Quality
+
+```bash
+# Lint
+ruff check .
+
+# Format
+black .
+
+# Type check
+mypy src/
+```
 
 ## License
 
