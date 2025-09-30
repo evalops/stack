@@ -14,6 +14,7 @@ A production-ready Transformers stack built on PyTorch with uv for reproducible 
 - 📊 **Serving**: Production FastAPI server with Prometheus metrics
 - 🎯 **CI/CD**: GitHub Actions workflows included
 - 🔧 **Configurable**: Hydra configs for reproducible experiments
+- 🕹️ **Hydra CLI**: Single command to launch fine-tuning runs with overrides
 - 📚 **Examples**: Multiple training and evaluation scripts
 
 ## Core Components
@@ -87,7 +88,39 @@ python examples/train_lora.py
 
 # Using Trainer API
 python examples/train_with_trainer.py
+
+# Using the Hydra-driven CLI (dry run)
+python -m transformers_stack.cli --dry-run
+
+# Launch training with overrides
+python -m transformers_stack.cli \
+  --override model.name=distilbert-base-uncased \
+  --override train.epochs=1 \
+  --override data.train_split="train[:1%]"
 ```
+
+### Hydra Training CLI
+
+The `transformers-stack` console script (or `python -m transformers_stack.cli`) wraps the
+Hydra config tree in `conf/` and wires the datasets/Trainer stack together.
+
+- Inspect config without running training:
+
+  ```bash
+  transformers-stack --dry-run
+  ```
+
+- Override any Hydra field using `key=value` syntax (repeat `--override` as needed):
+
+  ```bash
+  transformers-stack \
+    --override data.train_split="train[:10%]" \
+    --override train.learning_rate=1e-4 \
+    --override output_dir=outputs/exp-lr1e-4
+  ```
+
+Artifacts (model weights, tokenizer, metrics) are written to the resolved `output_dir` in the
+configuration.
 
 ## Example Usage
 
