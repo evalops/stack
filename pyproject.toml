@@ -17,16 +17,19 @@ dependencies = [
   # performance & fine-tuning
   "accelerate==1.10.1",
   "peft==0.17.1",
-  "bitsandbytes==0.47.0",
-  "flash-attn==2.8.3",
-  "xformers==0.0.32.post2",
-  "vllm==0.10.2",
   # utilities
   "sentencepiece>=0.1.99",
   "tqdm>=4.66",
 ]
 
 [project.optional-dependencies]
+cuda = [
+  # CUDA-only packages (Linux/Windows with NVIDIA GPU)
+  "bitsandbytes==0.47.0",
+  "flash-attn==2.8.3",
+  "xformers==0.0.32.post2",
+  "vllm==0.10.2",
+]
 dev = [
   "ruff",
   "black",
