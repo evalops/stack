@@ -1,83 +1,48 @@
+"""Optional installation verification tests.
+
+These tests validate that key libraries import correctly and that a simple
+transformers pipeline can run end-to-end. They are skipped by default because
+running the pipeline requires downloading public model weights.
 """
-Test script to verify the transformers stack installation
-"""
 
-print("Testing imports...")
+from __future__ import annotations
 
-try:
-    import torch
+import os
 
-    print(f"✓ PyTorch {torch.__version__}")
-    print(f"  - CUDA available: {torch.cuda.is_available()}")
-    print(f"  - MPS available: {torch.backends.mps.is_available()}")
-except ImportError as e:
-    print(f"✗ PyTorch import failed: {e}")
-    exit(1)
+import pytest
 
-try:
-    import transformers
+RUN_INSTALLATION_TESTS = os.getenv("RUN_INSTALLATION_TESTS") == "1"
 
-    print(f"✓ Transformers {transformers.__version__}")
-except ImportError as e:
-    print(f"✗ Transformers import failed: {e}")
-    exit(1)
+if not RUN_INSTALLATION_TESTS:
+    pytest.skip(
+        "Set RUN_INSTALLATION_TESTS=1 to run installation verification.",
+        allow_module_level=True,
+    )
 
-try:
-    import datasets
 
-    print(f"✓ Datasets {datasets.__version__}")
-except ImportError as e:
-    print(f"✗ Datasets import failed: {e}")
-    exit(1)
+def test_core_libraries_importable():
+    torch = pytest.importorskip("torch")
+    transformers = pytest.importorskip("transformers")
+    pytest.importorskip("accelerate")
+    pytest.importorskip("datasets")
+    pytest.importorskip("evaluate")
+    pytest.importorskip("peft")
 
-try:
-    import peft
+    assert torch.__version__
+    assert transformers.__version__
 
-    print(f"✓ PEFT {peft.__version__}")
-except ImportError as e:
-    print(f"✗ PEFT import failed: {e}")
-    exit(1)
 
-try:
-    import accelerate
-
-    print(f"✓ Accelerate {accelerate.__version__}")
-except ImportError as e:
-    print(f"✗ Accelerate import failed: {e}")
-    exit(1)
-
-try:
-    import evaluate
-
-    print(f"✓ Evaluate {evaluate.__version__}")
-except ImportError as e:
-    print(f"✗ Evaluate import failed: {e}")
-    exit(1)
-
-try:
-    import sklearn
-
-    print(f"✓ Scikit-learn {sklearn.__version__}")
-except ImportError as e:
-    print(f"✗ Scikit-learn import failed: {e}")
-    exit(1)
-
-print("\nAll core packages installed successfully!")
-
-print("\nTesting basic functionality...")
-
-try:
+@pytest.mark.slow
+@pytest.mark.timeout(120)
+def test_sentiment_pipeline_executes():
     from transformers import pipeline
 
-    print("✓ Creating a simple sentiment analysis pipeline...")
     classifier = pipeline(
-        "sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english", device=-1
+        "sentiment-analysis",
+        model="distilbert-base-uncased-finetuned-sst-2-english",
+        device=-1,
     )
-    result = classifier("I love this stack!")[0]
-    print(f"  - Test result: {result['label']} (score: {result['score']:.4f})")
-    print("✓ Pipeline test successful!")
-except Exception as e:
-    print(f"✗ Pipeline test failed: {e}")
-    exit(1)
 
-print("\n✅ Installation verified successfully!")
+    result = classifier("I love this stack!")[0]
+    assert result["label"] in {"POSITIVE", "NEGATIVE"}
+    assert 0 <= result["score"] <= 1

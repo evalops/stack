@@ -17,17 +17,17 @@ from transformers import (
     set_seed,
 )
 
+ACCURACY_METRIC = evaluate.load("accuracy")
+F1_METRIC = evaluate.load("f1")
+
 
 def compute_metrics(eval_pred):
     """Compute metrics for evaluation"""
-    accuracy_metric = evaluate.load("accuracy")
-    f1_metric = evaluate.load("f1")
-
     logits, labels = eval_pred
     predictions = np.argmax(logits, axis=-1)
 
-    accuracy = accuracy_metric.compute(predictions=predictions, references=labels)
-    f1 = f1_metric.compute(predictions=predictions, references=labels, average="binary")
+    accuracy = ACCURACY_METRIC.compute(predictions=predictions, references=labels)
+    f1 = F1_METRIC.compute(predictions=predictions, references=labels, average="binary")
 
     return {
         "accuracy": accuracy["accuracy"],

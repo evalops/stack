@@ -9,17 +9,17 @@ authors = [
 ]
 
 dependencies = [
-  "torch==2.8.0",
-  "transformers[torch]==4.56.2",
-  "datasets==4.1.1",
-  "evaluate>=0.4.1",
-  "scikit-learn>=1.3",
+  "torch>=2.2,<2.9",
+  "transformers[torch]>=4.38,<5",
+  "datasets>=2.19,<5",
+  "evaluate>=0.4.1,<0.5",
+  "scikit-learn>=1.3,<2.0",
   # performance & fine-tuning
-  "accelerate==1.10.1",
-  "peft==0.17.1",
+  "accelerate>=0.30,<1.11",
+  "peft>=0.12,<0.18",
   # utilities
-  "sentencepiece>=0.1.99",
-  "tqdm>=4.66",
+  "sentencepiece>=0.1.99,<0.3",
+  "tqdm>=4.66,<5",
 ]
 
 [project.optional-dependencies]
