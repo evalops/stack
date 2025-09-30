@@ -1,0 +1,8 @@
+# Evaluation configuration
+batch_size: 16
+eval_steps: 100  # evaluate every N steps
+metrics:
+  - accuracy
+  - f1
+  - precision
+  - recall

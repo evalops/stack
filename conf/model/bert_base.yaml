@@ -1,0 +1,16 @@
+# BERT base configuration
+name: bert-base-uncased
+num_labels: 2
+
+# Model settings
+gradient_checkpointing: false
+compile: false  # torch.compile
+
+# LoRA/PEFT settings
+use_peft: true
+peft:
+  r: 8
+  lora_alpha: 16
+  target_modules: ["query", "value"]
+  lora_dropout: 0.1
+  bias: "none"

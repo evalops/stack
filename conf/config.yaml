@@ -1,0 +1,31 @@
+# Main configuration file for training runs
+# Use Hydra to compose configs: https://hydra.cc/
+
+defaults:
+  - model: bert_base
+  - data: imdb
+  - train: default
+  - eval: default
+  - system: auto
+  - _self_
+
+# Task type: seq_cls, causal_lm, seq2seq
+task: seq_cls
+
+# Output directory (supports interpolation)
+output_dir: outputs/${now:%Y%m%d-%H%M%S}
+
+# Experiment tracking
+tracking:
+  enabled: false
+  backend: wandb  # wandb or mlflow
+  project: transformers-stack
+  run_name: null  # auto-generated if null
+
+# Random seed for reproducibility
+seed: 42
+
+# Logging
+logging:
+  level: INFO
+  log_interval: 10  # steps

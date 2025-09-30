@@ -1,0 +1,13 @@
+# IMDB dataset configuration
+dataset_name: imdb
+train_split: "train[:5%]"
+eval_split: "test[:5%]"
+
+# Preprocessing
+max_length: 512
+padding: max_length
+truncation: true
+
+# DataLoader
+num_workers: 4
+prefetch_factor: 2
