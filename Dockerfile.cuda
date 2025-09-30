@@ -1,0 +1,40 @@
+# Dockerfile for CUDA inference serving
+FROM nvidia/cuda:12.4.0-runtime-ubuntu22.04
+
+WORKDIR /app
+
+# Install Python and system dependencies
+RUN apt-get update && apt-get install -y \
+    python3.11 \
+    python3-pip \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:$PATH"
+
+# Copy project files
+COPY pyproject.toml ./
+COPY requirements-serve.txt ./
+COPY serving/ ./serving/
+COPY src/ ./src/
+
+# Install dependencies
+RUN uv pip install --system -r requirements-serve.txt
+
+# Install CUDA-specific packages
+RUN uv pip install --system \
+    "bitsandbytes==0.47.0" \
+    "flash-attn==2.8.3" \
+    "xformers==0.0.32.post2"
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Run the server
+CMD ["python3.11", "serving/app.py"]
