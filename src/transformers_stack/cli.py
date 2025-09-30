@@ -198,6 +198,9 @@ def _run_training(cfg: DictConfig) -> None:
     output_dir = Path(cfg.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    eval_strategy = "steps" if eval_cfg.eval_steps and eval_cfg.eval_steps > 0 else "no"
+    save_strategy = "steps" if train_cfg.save_steps and train_cfg.save_steps > 0 else "no"
+
     training_args = TrainingArguments(
         output_dir=str(output_dir),
         learning_rate=train_cfg.learning_rate,
@@ -206,11 +209,11 @@ def _run_training(cfg: DictConfig) -> None:
         per_device_train_batch_size=train_cfg.batch_size,
         per_device_eval_batch_size=eval_cfg.batch_size,
         gradient_accumulation_steps=train_cfg.gradient_accumulation_steps,
-        evaluation_strategy="steps" if eval_cfg.eval_steps > 0 else "no",
-        eval_steps=eval_cfg.eval_steps if eval_cfg.eval_steps > 0 else None,
-        logging_steps=max(1, eval_cfg.eval_steps // 2) if eval_cfg.eval_steps else 10,
-        save_strategy="steps" if train_cfg.save_steps > 0 else "epoch",
-        save_steps=train_cfg.save_steps if train_cfg.save_steps > 0 else None,
+        eval_strategy=eval_strategy,
+        eval_steps=eval_cfg.eval_steps if eval_strategy == "steps" else None,
+        logging_steps=max(1, eval_cfg.eval_steps // 2) if eval_strategy == "steps" else 10,
+        save_strategy=save_strategy,
+        save_steps=train_cfg.save_steps if save_strategy == "steps" else None,
         save_total_limit=train_cfg.save_total_limit,
         load_best_model_at_end=train_cfg.save_best,
         metric_for_best_model=train_cfg.metric_for_best_model,
@@ -221,7 +224,7 @@ def _run_training(cfg: DictConfig) -> None:
         fp16=train_cfg.mixed_precision == "fp16",
         bf16=train_cfg.mixed_precision == "bf16",
         max_grad_norm=train_cfg.max_grad_norm,
-        report_to=[],
+        report_to=None,
         seed=cfg.seed,
     )
 
