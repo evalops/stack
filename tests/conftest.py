@@ -15,8 +15,11 @@ def device():
     """Get available device for testing"""
     if torch.cuda.is_available():
         return "cuda"
-    elif torch.backends.mps.is_available():
+
+    # Some PyTorch builds (e.g. Linux CPU wheels) do not expose the MPS backend
+    if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
         return "mps"
+
     return "cpu"
 
 
