@@ -33,5 +33,5 @@ def synthetic_dataset():
         "test": [
             {"text": "Test positive", "label": 1},
             {"text": "Test negative", "label": 0},
-        ]
+        ],
     }
